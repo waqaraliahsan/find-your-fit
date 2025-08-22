@@ -1,9 +1,7 @@
-/** Next.js config for App Router, Edge where possible. */
+/** Next.js config for App Router */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    typedRoutes: true
-  },
+  experimental: { typedRoutes: true },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
@@ -11,5 +9,4 @@ const nextConfig = {
     ]
   }
 };
-
 export default nextConfig;
