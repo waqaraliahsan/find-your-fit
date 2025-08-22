@@ -1,1 +1,0 @@
-(sign-up code omitted for brevity in this snippet)
