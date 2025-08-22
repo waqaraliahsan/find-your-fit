@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-primary: #0f6efd;
+  --color-aqua: #12d4d4;
+  --color-navy: #0b1e3c;
+  --color-slate-text: #334155;
+  --color-bg: #f8fafc;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-slate-text);
+}
+
+* {
+  outline-color: var(--color-primary);
+}
