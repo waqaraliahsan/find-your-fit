@@ -1,7 +1,8 @@
 {
+  "version": 2,
   "framework": "nextjs",
-  "installCommand": "pnpm install",
-  "buildCommand": "pnpm build",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build",
   "outputDirectory": ".next",
-  "crons": []
+  "nodeVersion": "20.x"
 }
