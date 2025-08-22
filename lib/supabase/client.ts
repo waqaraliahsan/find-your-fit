@@ -1,9 +1,11 @@
-/** Client-side Supabase browser instance. Use sparingly; prefer server actions. */
-import { createClient } from "@supabase/supabase-js";
+/**
+ * Supabase browser client for client components (auth pages).
+ * Uses public URL + anon key.
+ */
+import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
 
-export const supabaseBrowser = () =>
-  createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } }
-  );
+export function supabaseBrowser() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  return createBrowserClient(url, anon);
+}
