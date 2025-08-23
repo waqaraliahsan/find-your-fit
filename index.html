@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+    <title>Find Your Fit (Static)</title>
+    <!-- Tailwind via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              blue: "#0F6EFD",
+              aqua: "#12D4D4",
+              navy: "#0B1E3C",
+              slateText: "#334155",
+              bg: "#F8FAFC"
+            }
+          }
+        }
+      };
+    </script>
+    <!-- Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+    <style>
+      :root { color-scheme: light; }
+      .chip { display:inline-flex; align-items:center; padding:.25rem .625rem; border-radius:9999px; border:1px solid #12D4D4; font-size:.75rem; }
+      .btn { display:inline-flex; align-items:center; justify-content:center; padding:.375rem .75rem; border-radius:.5rem; font-weight:500; }
+      .btn-primary { background:#0F6EFD; color:#fff; }
+      .btn-primary:hover { opacity:.9; }
+      .btn-secondary { border:1px solid #12D4D4; color:#0B1E3C; }
+      .btn-secondary:hover { background:rgba(18,212,212,.1); }
+      .card { background:#fff; border:1px solid #e5e7eb; border-radius:.75rem; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+      .input { height:2.5rem; width:100%; border:1px solid #e5e7eb; border-radius:.5rem; padding:0 .75rem; font-size:.875rem; outline:none; }
+      .input:focus { box-shadow:0 0 0 2px rgba(15,110,253,.3); border-color:#0F6EFD; }
+    </style>
+  </head>
+  <body class="min-h-screen bg-bg text-slateText">
+    <!-- Header -->
+    <header class="bg-white border-b">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg width="24" height="24" viewBox="0 0 24 24" class="text-blue"><circle cx="12" cy="12" r="10" fill="currentColor"/></svg>
+          <span class="font-semibold text-navy">Find Your Fit</span>
+        </div>
+        <nav class="flex items-center gap-2">
+          <button id="btn-open-auth" class="btn btn-secondary" type="button">Sign In</button>
+          <button id="btn-apply" class="btn btn-secondary" type="button" title="Non-functional in static demo">Become a Mentor</button>
+          <button id="btn-admin" class="btn btn-secondary" type="button" title="Use Supabase Studio for admin in static demo">Admin</button>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main -->
+    <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+      <!-- Search & Filters -->
+      <section class="card p-4">
+        <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+          <input id="q" class="input" placeholder="Search mentors by name, skills, profession..." />
+          <select id="city" class="input md:w-48">
+            <option value="">All cities</option>
+            <option>Karachi</option><option>Lahore</option><option>Islamabad</option>
+            <option>Rawalpindi</option><option>Peshawar</option><option>Quetta</option>
+            <option>Multan</option><option>Faisalabad</option><option>Sialkot</option>
+          </select>
+          <select id="sort" class="input md:w-48">
+            <option value="relevance">Sort: Relevance</option>
+            <option value="exp_desc">Experience: High → Low</option>
+            <option value="rate_asc">Rate: Low → High</option>
+          </select>
+          <button id="btn-search" class="btn btn-primary" type="button">Search</button>
+          <button id="btn-clear" class="btn btn-secondary" type="button">Clear</button>
+        </div>
+      </section>
+
+      <!-- Results -->
+      <section id="results" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></section>
+
+      <!-- Empty -->
+      <section id="empty" class="hidden">
+        <div class="card p-8 text-center">
+          <p>No mentors match those filters. Try widening your search.</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- Auth Modal -->
+    <dialog id="auth-modal" class="rounded-xl p-0">
+      <form method="dialog" class="card p-4 w-[360px]">
+        <h2 class="text-lg font-semibold mb-3">Sign in</h2>
+        <div class="space-y-2">
+          <label class="text-sm">Email</label>
+          <input id="auth-email" type="email" class="input" required />
+          <label class="text-sm">Password</label>
+          <input id="auth-password" type="password" class="input" required />
+        </div>
+        <div id="auth-error" class="text-sm text-red-600 mt-2"></div>
+        <div class="mt-4 flex items-center gap-2">
+          <button id="auth-submit" class="btn btn-primary" type="button">Sign in</button>
+          <button id="auth-close" class="btn btn-secondary" type="button">Close</button>
+        </div>
+        <div class="mt-3">
+          <button id="auth-google" class="btn btn-secondary w-full" type="button">Continue with Google</button>
+        </div>
+      </form>
+    </dialog>
+
+    <script>
+      // ==== CONFIG: replace with your Supabase project keys ====
+      const SUPABASE_URL = "YOUR_SUPABASE_URL";
+      const SUPABASE_ANON = "YOUR_SUPABASE_ANON_KEY";
+      // =========================================================
+
+      const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+      // --- Simple state ---
+      const state = {
+        session: null,
+        q: "",
+        city: "",
+        sort: "relevance",
+        page: 1,
+        pageSize: 12
+      };
+
+      // --- Elements ---
+      const $ = (sel) => document.querySelector(sel);
+      const resultsEl = $("#results");
+      const emptyEl = $("#empty");
+
+      // --- Auth modal handlers ---
+      const dlg = $("#auth-modal");
+      $("#btn-open-auth").addEventListener("click", () => dlg.showModal());
+      $("#auth-close").addEventListener("click", () => dlg.close());
+      $("#auth-submit").addEventListener("click", signIn);
+      $("#auth-google").addEventListener("click", signInWithGoogle);
+
+      async function signIn() {
+        const email = $("#auth-email").value.trim();
+        const password = $("#auth-password").value;
+        $("#auth-error").textContent = "";
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) {
+          $("#auth-error").textContent = error.message;
+        } else {
+          state.session = data.session;
+          dlg.close();
+          await fetchAndRender();
+        }
+      }
+
+      async function signInWithGoogle() {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: "google",
+          options: { redirectTo: location.origin }
+        });
+        if (error) alert(error.message);
+      }
+
+      // --- Search handlers ---
+      $("#btn-search").addEventListener("click", () => {
+        state.q = $("#q").value.trim();
+        state.city = $("#city").value;
+        state.sort = $("#sort").value;
+        state.page = 1;
+        fetchAndRender();
+      });
+
+      $("#btn-clear").addEventListener("click", () => {
+        $("#q").value = "";
+        $("#city").value = "";
+        $("#sort").value = "relevance";
+        state.q = "";
+        state.city = "";
+        state.sort = "relevance";
+        state.page = 1;
+        fetchAndRender();
+      });
+
+      // --- Data fetch (reads public profiles). Ensure RLS allows anon read! ---
+      async function fetchMentors({ q, city, sort, page, pageSize }) {
+        let query = supabase
+          .from("profiles")
+          .select("id, full_name, username, avatar_url, bio, education, profession, experience_years, location_city, can_mentor, role, hourly_rate", { count: "exact" })
+          .eq("can_mentor", true);
+
+        if (q) {
+          query = query.or(
+            ["full_name.ilike.%"+q+"%", "profession.ilike.%"+q+"%", "education.ilike.%"+q+"%"].join(",")
+          );
+        }
+        if (city) query = query.eq("location_city", city);
+
+        if (sort === "exp_desc") query = query.order("experience_years", { ascending: false });
+        if (sort === "rate_asc") query = query.order("hourly_rate", { ascending: true });
+
+        const from = (page - 1) * pageSize;
+        const to = from + pageSize - 1;
+        query = query.range(from, to);
+
+        const { data, error } = await query;
+        if (error) {
+          console.error(error);
+          return [];
+        }
+        return data || [];
+      }
+
+      function mentorCard(m) {
+        const name = m.full_name || m.username || "Mentor";
+        const exp = Number(m.experience_years || 0);
+        const loc = m.location_city || "-";
+        const profession = m.profession || "";
+        const education = m.education || "";
+        const rate = Number(m.hourly_rate || 0);
+        return `
+          <article class="card p-4 space-y-3">
+            <div class="flex items-center gap-3">
+              <img src="${m.avatar_url || "https://api.dicebear.com/8.x/initials/svg?seed="+encodeURIComponent(name)}" alt="${name}" class="h-12 w-12 rounded-full border" />
+              <div class="min-w-0">
+                <div class="font-medium text-navy truncate">${name}</div>
+                <div class="text-xs opacity-70">${profession}</div>
+              </div>
+              <span class="ml-auto chip">Verified</span>
+            </div>
+            <div class="text-sm">${education}</div>
+            <div class="flex items-center justify-between text-sm">
+              <span>${exp} yrs exp</span>
+              <span class="opacity-70">${loc}</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span class="opacity-70">Rate</span>
+              <span>PKR ${rate.toLocaleString("en-PK")}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button class="btn btn-primary w-full" data-request="${m.id}">Request Mentorship</button>
+            </div>
+          </article>
+        `;
+      }
+
+      async function fetchAndRender() {
+        const data = await fetchMentors(state);
+        resultsEl.innerHTML = data.map(mentorCard).join("");
+        emptyEl.classList.toggle("hidden", data.length !== 0);
+
+        // Bind request buttons
+        resultsEl.querySelectorAll("[data-request]").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const mentorId = e.currentTarget.getAttribute("data-request");
+            await requestConnection(mentorId);
+          });
+        });
+      }
+
+      async function requestConnection(mentorId) {
+        // Must be signed in
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          alert("Please sign in first.");
+          dlg.showModal();
+          return;
+        }
+        // Insert into connections (ensure RLS permits the mentee to insert)
+        const { error } = await supabase.from("connections").insert({
+          mentor_id: mentorId,
+          mentee_id: session.user.id,
+          status: "requested"
+        });
+        if (error) alert(error.message);
+        else alert("Request sent!");
+      }
+
+      // Initialize
+      (async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        state.session = session || null;
+        await fetchAndRender();
+      })();
+    </script>
+  </body>
+</html>
