@@ -1,5 +1,6 @@
 /**
  * Root homepage (Mentee discovery).
+ * Force dynamic so Next.js does not try to pre-render at build time.
  */
 import { getMentors } from "@/lib/queries/discovery";
 import { MentorCard } from "@/components/mentor-card";
@@ -7,7 +8,11 @@ import { SearchBar } from "@/components/search-bar";
 import { FilterPanel } from "@/components/filter-panel";
 import { EmptyState } from "@/components/empty-state";
 
-export const runtime = "edge";
+// Disable static generation for this page
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+// Use Node runtime for maximum compatibility with server libs
+export const runtime = "nodejs";
 
 type Search = { q?: string; page?: string };
 
