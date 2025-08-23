@@ -6,7 +6,7 @@
  * - Requires an authenticated user
  * - Upserts basic profile fields (name/username/city/gender)
  * - Inserts a pending row in mentor_applications
- * - (Lightweight) upserts skills and links them to the profile
+ * - Upserts skills (separate select after upsert to fetch id)
  */
 
 import { supabaseServerAction } from "@/lib/supabase/server";
@@ -66,27 +66,32 @@ export async function submitMentorApplication(raw: MentorApplicationInput) {
     if (error) return { ok: false, error: `Application insert failed: ${error.message}` };
   }
 
-  // (Optional) Upsert skills and link to profile
+  // Upsert skills and link to profile (two-step to avoid chaining filters on upsert())
   if (input.skills && input.skills.length > 0) {
     for (const name of input.skills) {
       const trimmed = name.trim();
       if (!trimmed) continue;
 
-      // Upsert skill
-      const { data: skillRow, error: skillErr } = await supabase
+      // 1) Upsert by name
+      const { error: upErr } = await supabase
         .from("skills")
-        .upsert({ name: trimmed }, { onConflict: "name" })
-        .select("*")
+        .upsert({ name: trimmed }, { onConflict: "name" });
+      if (upErr) continue; // skip this skill if upsert failed
+
+      // 2) Fetch id by name
+      const { data: skill, error: selErr } = await supabase
+        .from("skills")
+        .select("id")
         .eq("name", trimmed)
         .single();
 
-      if (skillErr || !skillRow) continue;
+      if (selErr || !skill) continue;
 
-      // Link to profile
+      // 3) Link to profile
       await supabase
         .from("profile_skills")
         .upsert(
-          { profile_id: user.id, skill_id: skillRow.id },
+          { profile_id: user.id, skill_id: skill.id },
           { onConflict: "profile_id,skill_id" }
         );
     }
