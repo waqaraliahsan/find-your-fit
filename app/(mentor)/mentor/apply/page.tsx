@@ -38,16 +38,20 @@ export default async function MentorApplyPage() {
   const { data: apps } = await supabase
     .from("mentor_applications")
     .select("id,status,review_notes,submitted_at")
-    .eq("applicant_id", session.user.id)
+    .eq("applicant_id", session!.user.id)
     .order("submitted_at", { ascending: false })
     .limit(1);
 
-  if (apps && apps.length > 0 && apps[0].status !== "rejected") {
+  const latest = apps?.[0]; // <- safe access
+
+  if (latest && latest.status !== "rejected") {
     return (
       <div className="mx-auto max-w-2xl space-y-3">
         <h1 className="text-xl font-semibold">Mentor Application</h1>
-        <p className="text-sm">Status: <b className="uppercase">{apps[0].status}</b></p>
-        {apps[0].review_notes ? <p className="text-sm">Notes: {apps[0].review_notes}</p> : null}
+        <p className="text-sm">
+          Status: <b className="uppercase">{latest.status}</b>
+        </p>
+        {latest.review_notes ? <p className="text-sm">Notes: {latest.review_notes}</p> : null}
         <p className="text-sm opacity-70">You’ll be notified when an admin reviews your application.</p>
       </div>
     );
