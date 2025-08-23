@@ -22,10 +22,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="text-navy font-semibold tracking-tight">Find Your Fit</span>
             </Link>
             <nav className="flex items-center gap-3">
-              <Link href="/auth/sign-in" className="px-3 py-1.5 rounded-md text-white bg-blue hover:opacity-90">Sign In</Link>
-              <Link href="/mentor/apply" className="px-3 py-1.5 rounded-md border border-aqua text-navy hover:bg-aqua/10">Become a Mentor</Link>
-              <Link href="/admin" className="px-3 py-1.5 rounded-md border hover:bg-white">Admin</Link>
-              <Link href="/profile" className="px-3 py-1.5 rounded-md border hover:bg-white">Profile</Link>
+              <Link href="/auth/sign-in" className="px-3 py-1.5 rounded-md text-white bg-blue hover:opacity-90">
+                Sign In
+              </Link>
+              <Link
+                href="/mentor/apply"
+                className="px-3 py-1.5 rounded-md border border-aqua text-navy hover:bg-aqua/10"
+              >
+                Become a Mentor
+              </Link>
+              <Link href="/admin" className="px-3 py-1.5 rounded-md border hover:bg-white">
+                Admin
+              </Link>
+              <Link href="/profile" className="px-3 py-1.5 rounded-md border hover:bg-white">
+                Profile
+              </Link>
             </nav>
           </div>
         </header>
