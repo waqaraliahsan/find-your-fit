@@ -2,7 +2,6 @@
 
 /**
  * Lightweight React Hook Form wrapper with proper generics.
- * Fixes TS errors around defaultValues typing.
  */
 import React from "react";
 import {
