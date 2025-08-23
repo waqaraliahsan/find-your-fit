@@ -1,13 +1,12 @@
 /**
  * Middleware: only protect /admin/**.
- * Everything else passes straight through, preventing accidental 404s.
+ * Everything else goes straight through—prevents accidental 404s for /
  */
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
 
 export async function middleware(req: NextRequest) {
-  // Allow every route except /admin/**
   if (!req.nextUrl.pathname.startsWith("/admin")) {
     return NextResponse.next();
   }
@@ -25,7 +24,6 @@ export async function middleware(req: NextRequest) {
   return res;
 }
 
-// Only match /admin/**
 export const config = {
   matcher: ["/admin/:path*"]
 };
