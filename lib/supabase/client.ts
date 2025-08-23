@@ -1,11 +1,11 @@
 /**
  * Supabase browser client for client components (auth pages).
- * Uses public URL + anon key.
+ * Uses the vanilla JS SDK to avoid helper API differences.
  */
-import { createBrowserClient } from "@supabase/auth-helpers-nextjs";
+import { createClient } from "@supabase/supabase-js";
 
 export function supabaseBrowser() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
   const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-  return createBrowserClient(url, anon);
+  return createClient(url, anon);
 }
