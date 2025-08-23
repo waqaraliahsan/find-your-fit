@@ -1,3 +1,6 @@
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+export const runtime = "nodejs";
 import { supabaseServerComponent } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { updateProfile } from "@/lib/actions/update-profile";
