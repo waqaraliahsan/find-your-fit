@@ -2,18 +2,19 @@
 
 /**
  * Lightweight React Hook Form wrapper with proper generics.
- * Fixes TS error: Type 'T' does not satisfy the constraint 'FieldValues'.
+ * Fixes TS errors around defaultValues typing.
  */
 import React from "react";
 import {
   useForm,
   FormProvider,
   type SubmitHandler,
-  type FieldValues
+  type FieldValues,
+  type DefaultValues
 } from "react-hook-form";
 
 type Props<T extends FieldValues> = {
-  defaultValues: T;
+  defaultValues?: DefaultValues<T>;
   onSubmit: SubmitHandler<T>;
   children: React.ReactNode;
 };
